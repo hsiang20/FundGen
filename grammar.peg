@@ -1,0 +1,47 @@
+program = (statement / emptyline / comment)*
+
+statement = (function / show_stmt / stat_stmt / select_stmt) semicolon
+
+function = name leftparam param_list? rightparam
+param_list = (expr comma)* expr
+expr = name equal (name / literal / string)
+
+show_stmt = show name
+stat_stmt = stat name
+
+select_stmt = select leftparam literal* rightparam leftbrace (function comma)* function rightbrace
+
+name = ~r'[_a-zA-Z][-\w]*' ws
+string = ~r'"[^"]*"' ws
+literal = ~r"[0-9]+" ws
+
+
+comment = hash ~r".*" ws
+
+let = "let" ws
+def = "def" ws
+mat = "Mat" ws
+return = "return" ws
+show = "show" ws
+stat = "stat" ws
+select = "select" ws
+equal = "=" ws
+semicolon = ";" ws
+colon = ":" ws
+comma = "," ws
+leftparam = "(" ws
+rightparam = ")" ws
+arrow = "->" ws
+leftbrace = "{" ws
+rightbrace = "}" ws
+leftbracket = "[" ws
+rightbracket = "]" ws
+underscore = "_" ws
+hash = "#" ws
+add = "+"
+sub = "-"
+mul = "*"
+div = "/"
+
+emptyline = ws+ comment*
+ws = ~r"\s*"

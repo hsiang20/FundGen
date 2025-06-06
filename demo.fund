@@ -1,0 +1,24 @@
+# Part 1: load data
+load(data=Volume);
+load(data=Close);
+load(data=EBIT);
+
+# Part 2: Strategy
+rank(out=Volume, in=Volume);
+rank(out=Close, in=Close);
+select(1) {
+    tscorr(out=_, in1=Volume, in2=Close, days=10),
+    tscorr(out=_, in1=Volume, in2=Close, days=5),
+    tscorr(out=_, in1=Volume, in2=Close, days=3)
+};
+select(0) {
+    mul(out=_, in1=_, in2=EBIT),
+    rank(out=_, in=_)
+};
+
+# Part 3: Normalize
+normalize(out=portfolio, in=_);
+
+# Part 4: Show the stat
+stat portfolio;
+

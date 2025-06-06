@@ -1,0 +1,12 @@
+# Load price data
+load(data=Close);
+# Calculate the rolling average in 10 days periods
+tsmean(out=_, in=_, days=10);
+# Calculate the difference between rolling average and price
+sub(out=_, in1=_, in2=Close);
+# Rank the difference among assets in each day
+rank(out=_, in=_);
+# Get Z-score with mean=0, std=1 among assets in each day
+normalize(out=portfolio, in=_);
+# This is your portfolio. Return the porfolio and visualize profits
+return portfolio;
