@@ -1,10 +1,8 @@
 from enum import Enum
-from utils import ScopedDict
 from dataclasses import dataclass
 from helpers import *
 from op import *
-
-
+from config import *
 
 class BinOp(Enum):
     """Enum representing each arithmetic operator"""
@@ -168,7 +166,7 @@ now_config = 0
 best_config = 0
 best_stat = None
 
-def interpret_expr(expr: Expr, bindings: ScopedDict, declarations: ScopedDict):
+def interpret_expr(expr: Expr, bindings, declarations):
     global now_config
     global best_config
     global best_stat
@@ -181,10 +179,17 @@ def interpret_expr(expr: Expr, bindings: ScopedDict, declarations: ScopedDict):
                 bindings[args["data"]] = data
                 bindings["_tmp"] = data
                 return
-            if name == "tsmean":
-                args_check(args, ["out", "in", "days"])
+            if name == "nanto0":
+                args_check(args, ["out", "in"])
                 data_in = find_data_in(args, bindings)
-                out = tsmean(data_in, args["days"])
+                out = nanto0(data_in)
+                bindings[args["out"]] = out
+                bindings["_tmp"] = out
+                return out
+            if name == "cap_floor":
+                args_check(args, ["out", "in", "cap", "floor"])
+                data_in = find_data_in(args, bindings)
+                out = cap_floor(data_in, args["cap"], args["floor"])
                 bindings[args["out"]] = out
                 bindings["_tmp"] = out
                 return out
@@ -220,10 +225,52 @@ def interpret_expr(expr: Expr, bindings: ScopedDict, declarations: ScopedDict):
                 bindings[args["out"]] = out
                 bindings["_tmp"] = out
                 return out
+            if name == "addconst":
+                args_check(args, ["out", "in", "c"])
+                data_in1 = find_data_in(args, bindings, name="in")
+                out = addconst(data_in1, args["c"])
+                bindings[args["out"]] = out
+                bindings["_tmp"] = out
+                return out
+            if name == "subconst":
+                args_check(args, ["out", "in", "c"])
+                data_in1 = find_data_in(args, bindings, name="in")
+                out = subconst(data_in1, args["c"])
+                bindings[args["out"]] = out
+                bindings["_tmp"] = out
+                return out
+            if name == "mulconst":
+                args_check(args, ["out", "in", "c"])
+                data_in1 = find_data_in(args, bindings, name="in")
+                out = mulconst(data_in1, args["c"])
+                bindings[args["out"]] = out
+                bindings["_tmp"] = out
+                return out
+            if name == "divconst":
+                args_check(args, ["out", "in", "c"])
+                data_in1 = find_data_in(args, bindings, name="in")
+                out = divconst(data_in1, args["c"])
+                bindings[args["out"]] = out
+                bindings["_tmp"] = out
+                return out
             if name == "flip":
                 args_check(args, ["out", "in"])
                 data_in = find_data_in(args, bindings)
                 out = flip(data_in)
+                bindings[args["out"]] = out
+                bindings["_tmp"] = out
+                return out
+            if name == "abs":
+                args_check(args, ["out", "in"])
+                data_in = find_data_in(args, bindings)
+                out = abs(data_in)
+                bindings[args["out"]] = out
+                bindings["_tmp"] = out
+                return out
+            if name == "power":
+                args_check(args, ["out", "in", "c"])
+                data_in = find_data_in(args, bindings)
+                out = power(data_in, args["c"])
                 bindings[args["out"]] = out
                 bindings["_tmp"] = out
                 return out
@@ -248,6 +295,13 @@ def interpret_expr(expr: Expr, bindings: ScopedDict, declarations: ScopedDict):
                 bindings[args["out"]] = out
                 bindings["_tmp"] = out
                 return out
+            if name == "tsmean":
+                args_check(args, ["out", "in", "days"])
+                data_in = find_data_in(args, bindings)
+                out = tsmean(data_in, args["days"])
+                bindings[args["out"]] = out
+                bindings["_tmp"] = out
+                return out
             if name == "tsrank":
                 args_check(args, ["out", "in", "days"])
                 data_in = find_data_in(args, bindings)
@@ -263,12 +317,15 @@ def interpret_expr(expr: Expr, bindings: ScopedDict, declarations: ScopedDict):
                 bindings[args["out"]] = out
                 bindings["_tmp"] = out
                 return out
+            if name == "tsstd":
+                args_check(args, ["out", "in", "days"])
+                data_in = find_data_in(args, bindings)
+                out = tsstd(data_in, args["days"])
+                bindings[args["out"]] = out
+                bindings["_tmp"] = out
+                return out
 
-            if name == "nanto0":
-                assert("out" in args)
-                assert("in" in args)
-                nanto0()
-                return
+            
 
             arg_values = [interpret_expr(arg, bindings, declarations) for arg in args]
             if name == "print":
@@ -292,20 +349,20 @@ def interpret_expr(expr: Expr, bindings: ScopedDict, declarations: ScopedDict):
         case Show(expr = expr):
             cumulative_return = draw_profit(bindings[expr])
         case Stat(expr = expr):
-            sharpe, annual_returns_rate = show_stat(bindings[expr])
+            sharpe, annual_returns_rate, turnover_rate = show_stat(bindings[expr])
             # print(bindings[expr])
             if best_stat == None:
                 best_config = now_config
-                best_stat = {"Sharpe": sharpe, "Annual Returns Rate": annual_returns_rate}
-                save_to_cache(bindings[expr], bindings[expr].index, "cache/portfolio.npz")
+                best_stat = {"Sharpe": sharpe, "Annual Returns Rate": annual_returns_rate, "Turnover Rate": turnover_rate}
+                save_to_cache(bindings[expr], bindings[expr].index, f"{cache_path}/portfolio.npz")
             else:
                 if sharpe > best_stat["Sharpe"]:
                     best_config = now_config
-                    best_stat = {"Sharpe": sharpe, "Annual Returns Rate": annual_returns_rate}
-                    save_to_cache(bindings[expr], bindings[expr].index, "cache/portfolio.npz")
+                    best_stat = {"Sharpe": sharpe, "Annual Returns Rate": annual_returns_rate, "Turnover Rate": turnover_rate}
+                    save_to_cache(bindings[expr], bindings[expr].index, f"{cache_path}/portfolio.npz")
 
 
-def interpret_stmt(stmt: Statement, bindings: ScopedDict, declarations: ScopedDict):
+def interpret_stmt(stmt: Statement, bindings, declarations):
     match stmt:
         case Show(expr = expr):
             return interpret_expr(stmt, bindings, declarations)
@@ -315,7 +372,7 @@ def interpret_stmt(stmt: Statement, bindings: ScopedDict, declarations: ScopedDi
             interpret_expr(stmt, bindings, declarations)
             
 
-def interpret_block(block: Block, bindings: ScopedDict, declarations: ScopedDict):
+def interpret_block(block: Block, bindings, declarations):
     global now_config
     global best_config
     global best_stat
@@ -338,18 +395,23 @@ def interpret_block(block: Block, bindings: ScopedDict, declarations: ScopedDict
         for stmt in all_block[i]:
             interpret_stmt(stmt, bindings, declarations)
         now_config += 1
-    # print(f"Best Config:")
-    # print_config(all_block[best_config])
-    # print()
-    # print(f"Best State:")
+    print()
+    print("============================")
+    print("Best Strategy in this round:")
+    print_config(all_block[best_config])
+    print()
+    print("Stats of the best strategy:")
     print_stat(best_stat)
+    print("============================")
     print()
     # Draw and save image
-    cached_data, cached_dates = load_from_cache("cache/portfolio.npz")
+    cached_data, cached_dates = load_from_cache(f"{cache_path}/portfolio.npz")
     portfolio = pd.DataFrame(cached_data, index=cached_dates)
     save_profit(portfolio)
-    with open("portfolio/portfolio.txt", "w") as f:
+    with open(f"{strategy_path}/strategy.txt", "w") as f:
         for s in all_block[best_config]:
+            if str(s)[0] == "[":
+                continue
             f.write(str(s))
             f.write("\n")
     return []

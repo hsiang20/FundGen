@@ -5,21 +5,9 @@ import numpy as np
 from math import factorial
 from itertools import permutations
 import copy
+from config import *
 
-start_date = "2023-01-01"
-end_date = "2025-05-28"
 price_index = yf.download("AAPL", auto_adjust=True, start=start_date, end=end_date, progress=False).index
-
-fund_size = 1000000
-
-tickers = [
-    "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "BRK-B", "META", "TSLA", "UNH", "JNJ",
-    "V", "XOM", "JPM", "PG", "MA", "HD", "LLY", "CVX", "MRK", "PEP",
-    "ABBV", "KO", "AVGO", "COST", "WMT", "DIS", "BAC", "ADBE", "MCD", "CRM",
-    "ACN", "PFE", "ABT", "TMO", "CSCO", "INTC", "VZ", "TXN", "DHR", "NFLX",
-    "LIN", "NKE", "ORCL", "MDT", "AMGN", "NEE", "QCOM", "PM", "IBM", "UPS"
-]
-
 price_data = ["High", "Low", "Close", "Volume", "Dividends", "Stock Splits"]
 financials_data = yf.Ticker("AAPL").financials.index
 
@@ -40,7 +28,7 @@ Historical price/volume data
 High, Low, Close, Volume, Dividends, Stock Splits
 """
 def load(data_name):
-    cache_name = f"cache/{data_name}.npz"
+    cache_name = f"{cache_path}/{data_name}.npz"
     cached_data, cached_dates = load_from_cache(cache_name)
     if is_cache_valid(cached_dates, price_index):
         # print(data_name, "cache valid!")
@@ -86,7 +74,7 @@ def is_cache_valid(old_dates, new_dates):
     return (old_dates is not None) and (len(old_dates) == len(new_dates)) and (all(old_dates == new_dates))
 
 def get_returns(new_dates):
-    cached_returns, cached_dates = load_from_cache("cache/returns.npz")
+    cached_returns, cached_dates = load_from_cache(f"{cache_path}/returns.npz")
     if is_cache_valid(cached_dates, new_dates):
         # print("returns cache valid!")
         # print(cached_returns["data"])
@@ -95,7 +83,7 @@ def get_returns(new_dates):
         # print("cache invalid, reload returns data")
         close_data = load("Close")
         returns = close_data.pct_change()
-        save_to_cache(returns, new_dates, "cache/returns.npz")
+        save_to_cache(returns, new_dates, f"{cache_path}/returns.npz")
         return returns
     
 def get_daily_profit(portfolio):
@@ -138,7 +126,7 @@ def save_profit(data):
     plt.title("Portfolio Cumulative Profit Over Time")
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig("image/profit.png")
+    plt.savefig(f"{image_path}/profit.png")
     return cumulative_profit
 
 def show_stat(portfolio):
@@ -149,13 +137,18 @@ def show_stat(portfolio):
     print("Sharpe Ratio:", round(sharpe_ratio, 3))
     annual_return_rate = get_annual_returns(daily_return)
     print("Annual Return Rate:", round(annual_return_rate, 3), "%")
-    return sharpe_ratio, annual_return_rate
+    turnover_rate = get_turnover(portfolio)
+    print("Turnover Rate:", round(turnover_rate, 3), "%")
+    return sharpe_ratio, annual_return_rate, turnover_rate
 
-def turnover(data):
-    pass
 
 def get_annual_returns(daily_return):
-    annual_return = np.sum(daily_return) * (252 / len(daily_return))
+    cumulative_profit = np.cumsum(daily_return)
+    cumulative_profit = cumulative_profit * fund_size
+    total_return = cumulative_profit[-1] / fund_size
+    # annual_return = np.sum(daily_return) * (252 / len(daily_return))
+    total_return = np.nan_to_num(total_return, nan=1)
+    annual_return = abs(total_return)/total_return * abs(total_return) ** (252/len(daily_return)) * 100
     return annual_return
 
 def get_Sharpe(daily_return):
@@ -164,6 +157,13 @@ def get_Sharpe(daily_return):
 
     sharpe_ratio = (mean_daily_return) / std_daily_return * np.sqrt(252)
     return sharpe_ratio
+
+def get_turnover(portfolio):
+    # print(portfolio)
+    turnover = (portfolio.diff().abs()).sum(axis=1)
+    # print(turnover)
+    turnover_rate = (turnover / portfolio.replace(0, np.nan).abs().sum(axis=1)).mean() * 100
+    return turnover_rate
 
 def get_comb_num(total, select):
     # from n objects choose m objects, with any order
@@ -207,13 +207,17 @@ def repeat_block_all(all_block, num_of_iteration, stmt):
     return all_block, num_of_iteration
 
 def print_stat(stat):
-    print()
     for key in stat:
-        print(key, ":", round(stat[key], 3))
+        if "Rate" in key:
+            print(f"{key}: {round(stat[key], 3)}%")
+        else:
+            print(f"{key}: {round(stat[key], 3)}")
 
 def print_config(config):
-    for b in config:
-        print(b)
+    for s in config:
+        if str(s)[0] == "[":
+            continue
+        print(str(s))
 
 if __name__ == "__main__":
     print(get_comb_num(3, 1))

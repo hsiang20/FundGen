@@ -3,7 +3,6 @@ from parsimonious.nodes import Node
 from parsimonious.grammar import Grammar
 from pathlib import Path
 from AST import *
-from typ import *
 import sys
 
 
@@ -92,7 +91,7 @@ class MatrixVisitor(NodeVisitor):
 
 
 def parse(file_name: str):
-    grammar = Grammar(Path("grammar.peg").read_text())
+    grammar = Grammar(Path(f"{src_path}/grammar.peg").read_text())
     tree = grammar.parse(Path(file_name).read_text())
 
     # print("parsing", file_name)

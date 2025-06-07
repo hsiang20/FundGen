@@ -8,6 +8,11 @@ def nanto0(data):
     data[np.isnan(data)] = 0.0
     return data
 
+def cap_floor(data, cap, floor):
+    data[data > cap] = cap
+    data[data < floor] = floor
+    return data
+
 """
 EASY DATA MANIPULATION
 """
@@ -27,8 +32,30 @@ def div(data1, data2):
     out = data1 / data2
     return out
 
+def addconst(data1, c):
+    out = data1 + c
+    return out
+
+def subconst(data1, c):
+    out = data1 - c
+    return out
+
+def mulconst(data1, c):
+    out = data1 * c
+    return out
+
+def divconst(data1, c):
+    out = data1 / c
+    return out
+
 def flip(data):
     return -data
+
+def power(data, c):
+    return data ** c
+
+# def absolute(data):
+#     return abs(data)
 
 """
 ASSET-WISE OPERATIONS
@@ -59,30 +86,10 @@ TIME-SERIES OPERATIONS
 """
 def tsmean(data, days):
     result = data.rolling(window = days, min_periods = 1).mean()
-    # print(type(data))
-
-    # T, N = data.shape
-    # result = np.zeros_like(data, dtype=np.float64)
-    # cumsum = np.cumsum(data, axis=0)
-    # print(cumsum)
-    # for t in range(T):
-    #     start = max(0, t - days + 1)
-    #     if start == 0:
-    #         window_sum = cumsum[t]
-    #     else:
-    #         window_sum = cumsum[t] - cumsum[start - 1]
-    #     window_size = t - start - 1
-    #     result[t] = window_sum / window_size
     return result
 
 
 def tsrank(data, t):
-    # def rolling_rank(series):
-    #     return series.rolling(window=t, min_periods=1).apply(
-    #         lambda x: pd.Series(x).rank().iloc[-1]
-    #     )
-
-    # return data.apply(rolling_rank)
     arr = data.to_numpy()
     T, N = arr.shape
     result = np.full((T, N), np.nan, dtype=np.float64)
@@ -121,3 +128,6 @@ def tscorr(data1, data2, t):
                 result[i, j] = 0
 
     return pd.DataFrame(result, index=data1.index, columns=data1.columns)
+
+def tsstd(data, t):
+    return data.rolling(window=t, min_periods=t).std()

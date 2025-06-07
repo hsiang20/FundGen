@@ -1,0 +1,56 @@
+# Part 1: load data
+load(data=Volume);
+load(data=Close);
+load(data=EBIT);
+load(data="Reconciled Depreciation");
+load(data="Net Income");
+load(data="Normalized EBITDA");
+load(data="Total Revenue");
+
+# Part 2: Strategy
+## Normalize and Clean Earnings
+rank(out=EBIT_rank, in=EBIT);
+rank(out=EBITDA_rank, in="Normalized EBITDA");
+add(out=earnings, in1=EBIT_rank, in2=EBITDA_rank);
+nanto0(out=Depreciation, in="Reconciled Depreciation");
+rank(out=Depreciation_rank, in=Depreciation);
+add(out=earnings, in1=earnings, in2=Depreciation_rank);
+
+## Consistent earnings over time
+tsstd(out=earnings_std, in="Net Income", days=300);
+nanto0(out=earnings_std, in=earnings_std);
+rank(out=earnings_std_rank, in=earnings_std);
+
+## Capital Efficiency (profit margin)
+cap_floor(out=revenue_cap, in="Total Revenue", cap=100000, floor=100);
+div(out=margin, in1="Net Income", in2=revenue_cap);
+rank(out=margin_rank, in=margin);
+
+## Volume and Price correlation
+rank(out=volume_rank, in=Volume);
+rank(out=close_rank, in=Close);
+select(0) {
+    tscorr(out=_, in1=Volume, in2=Close, days=40),
+    tscorr(out=_, in1=Volume, in2=Close, days=30),
+    tscorr(out=_, in1=Volume, in2=Close, days=20)
+};
+select(0) {
+    tsrank(out=_, in=_, days=25),
+    tsrank(out=_, in=_, days=15)
+};
+addconst(out=pv_corr_tsrank, in=_, c=0);
+
+## Ensemble
+add(out=_, in1=earnings, in2=earnings_std_rank);
+rank(out=_, in=_);
+add(out=_, in1=_, in2=margin_rank);
+rank(out=_, in=_);
+mulconst(out=_, in=_, c=5);
+add(out=_, in1=_, in2=pv_corr_tsrank);
+
+# Part 3: Normalize
+normalize(out=portfolio, in=_);
+
+# Part 4: Show the stat
+stat portfolio;
+
