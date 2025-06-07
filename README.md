@@ -1,5 +1,14 @@
 # FundGen:  DSL for Investment Portfolio Generation
-[TOC]
+People like to invest in the stock markets, but most of us lack the time and tools to conduct meaningful quantitative research. Can we make quant research accessible to everyone so we can even do research from home by ourselves?  
+FundGen helps people without financial background to do generate profitable portfolio. If you want to: 
+* invest according to historical data
+* do backtesting and find best strategy
+* do research automatically because you don't have finance background
+* be cool
+FundGen is for you!
+
+---
+
 ## Quick Start
 ### Installation
 Clone the repo and install dependency with the following commands:
@@ -42,7 +51,7 @@ Turnover Rate: 52.78%
 The Sharpe ratio is very low and the annual returns rate is negative, meaning the risk of this strategy is very high and this strategy needs refinement to be used to trade. 
 
 5. The cumulative profit is stored as `profit.png` in the `image` folder: 
-![image](https://hackmd.io/_uploads/S1RAcG-mex.png)
+![image](image/hello.png)
 
 6. If you want to use this strategy to trade, you can view `portfolio/portfolio.csv` to see your portfolio today. 
 
@@ -172,7 +181,7 @@ Turnover Rate: 9.83%
 With the best strategy specifying what strategy yields this performance. 
 
 In `image` directory we can find the cumulative profits over two years:
-![image](https://hackmd.io/_uploads/HkFEGz-mee.png)
+![image](image/buffett.png)
 
 This looks really good! 
 For your information, Buffett's Berkshire Hathaway has realized a Sharpe ratio of 0.79. And we got 2.09 with our strategy, which means in terms of Sharpe ratio we beat Buffett!
@@ -189,6 +198,8 @@ AMZN,28225.54
 NVDA,23120.65
 ...
 ```
+
+---
 
 ## Supported Data
 Data are fetched from yfinance dataset. 
@@ -235,6 +246,8 @@ High, Low, Close, Volume, Dividends
 'Cost Of Revenue',
 'Total Revenue', 
 'Operating Revenue'
+
+---
 
 ## Primitives
 * Data Pre-processing
