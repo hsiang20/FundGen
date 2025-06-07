@@ -22,7 +22,8 @@ chmod +x run
 ### Hello Portfolio!
 1. Create a file named `hello.fund`.
 2. Implement a basic trading strategy. In this example, the trading strategy is:
-> If the stock price is lower than its 10-day average, we buy the stock because we believe the price will rise. If the stock price is higher than its 10-day average, we short the stock because we believe the price will fall. 
+> If the stock price is lower than its 10-day average, we buy the stock because we believe the price will rise. 
+> If the stock price is higher than its 10-day average, we short the stock because we believe the price will fall. 
 
 Implement this strategy by writing in `hello.fund`:
 ```c
@@ -44,9 +45,9 @@ stat portfolio;
 
 4. You can view the strategy and the backtesting result in the terminal:
 > Stats of the best strategy:
-Sharpe: -0.922
-Annual Returns Rate: -219.134%
-Turnover Rate: 52.78%
+> Sharpe: -0.922
+> Annual Returns Rate: -219.134%
+> Turnover Rate: 52.78%
 
 The Sharpe ratio is very low and the annual returns rate is negative, meaning the risk of this strategy is very high and this strategy needs refinement to be used to trade. 
 
@@ -175,8 +176,8 @@ or directly run our example:
 ```
 Since we use `select`, there are 60 cases to run. The program should output
 > Sharpe: 2.09
-Annual Returns Rate: 234.675%
-Turnover Rate: 9.83%
+> Annual Returns Rate: 234.675%
+> Turnover Rate: 9.83%
 
 With the best strategy specifying what strategy yields this performance. 
 
@@ -203,10 +204,10 @@ NVDA,23120.65
 
 ## Supported Data
 Data are fetched from yfinance dataset. 
-### High-Frequency Data
-High, Low, Close, Volume, Dividends
+### Daily Data
+'High' (highest price of the day), 'Low' (lowest price of the day), 'Close' (close price of the day), 'Volume' (trading volume of the day), 'Dividends' 
 
-### Low-Frequency Data
+### Fundamental Data
 'Tax Effect Of Unusual Items', 
 'Tax Rate For Calcs',
 'Normalized EBITDA',
