@@ -44,10 +44,10 @@ stat portfolio;
 ```
 
 4. You can view the strategy and the backtesting result in the terminal:
-> Stats of the best strategy:
-> Sharpe: -0.922
-> Annual Returns Rate: -219.134%
-> Turnover Rate: 52.78%
+> Stats of the best strategy:  
+> Sharpe: -0.922  
+> Annual Returns Rate: -219.134%  
+> Turnover Rate: 52.78%  
 
 The Sharpe ratio is very low and the annual returns rate is negative, meaning the risk of this strategy is very high and this strategy needs refinement to be used to trade. 
 
@@ -175,9 +175,10 @@ or directly run our example:
 ./run examples/buffett.fund
 ```
 Since we use `select`, there are 60 cases to run. The program should output
-> Sharpe: 2.09
-> Annual Returns Rate: 234.675%
-> Turnover Rate: 9.83%
+> Stats of the best strategy:  
+> Sharpe: 2.09  
+> Annual Returns Rate: 234.675%  
+> Turnover Rate: 9.83%  
 
 With the best strategy specifying what strategy yields this performance. 
 
