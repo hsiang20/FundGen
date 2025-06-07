@@ -9,4 +9,4 @@ rank(out=_, in=_);
 # Get Z-score with mean=0, std=1 among assets in each day
 normalize(out=portfolio, in=_);
 # This is your portfolio. Return the porfolio and visualize profits
-stat portfolio;
+return portfolio;

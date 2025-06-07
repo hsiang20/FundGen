@@ -1,9 +1,9 @@
 # FundGen:  DSL for Investment Portfolio Generation
-People like to invest in the stock markets, but most of us lack the time and tools to conduct meaningful quantitative research. Can we make quant research accessible to everyone so we can even do research from home by ourselves?  
+People like to invest in the stock markets, but most of us lack the time and tools to conduct meaningful quantitative research. Can we make quantitative research accessible to everyone so we can even do research from home by ourselves?  
 FundGen helps people without financial background to do generate profitable portfolio. If you want to: 
 * invest according to historical data
 * do backtesting and find best strategy
-* do research automatically because you don't have finance background
+* do research automatically because you don't have financial background
 * be cool
 FundGen is for you!
 
@@ -284,4 +284,17 @@ tsmean(out, in, days); # out = moving average of "in" for the past "days" days. 
 tsrank(out, in, days); # rank each asset among the past "days" days. Data value will be 1, 2, ..., days. days is an integer > 0.
 tscorr(out, in1, in2, days); # correlation coefficient of in1 and in2 over the past "days" days. days is an integer > 0. 
 tsstd(out, in, days); # standard deviation of "in" over the past "days" days. days is an integer > 0. 
+```
+
+* Select Operation
+```c
+select(n) {
+    primitive_1(),
+    primitive_2(), 
+    ...
+    primitive_k()
+}; 
+# Try every combination and permutations of n of the k primitives. 
+# n must be smaller than or equal to k. 
+# If n is 0, try every combination and permutation of any subset of the k primitives. 
 ```

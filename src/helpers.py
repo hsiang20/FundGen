@@ -141,7 +141,6 @@ def show_stat(portfolio):
     print("Turnover Rate:", round(turnover_rate, 3), "%")
     return sharpe_ratio, annual_return_rate, turnover_rate
 
-
 def get_annual_returns(daily_return):
     cumulative_profit = np.cumsum(daily_return)
     cumulative_profit = cumulative_profit * fund_size

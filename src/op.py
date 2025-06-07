@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import time
 
 """
 DATA PROCESSING
@@ -87,6 +88,15 @@ TIME-SERIES OPERATIONS
 def tsmean(data, days):
     result = data.rolling(window = days, min_periods = 1).mean()
     return result
+    # T, N = data.shape
+    # result = np.full((T, N), np.nan)
+    # arr = data.to_numpy()
+    # for i in range(T):  # loop over time
+    #     start = max(0, i - days + 1)
+    #     window = arr[start:i+1, :]  # slice window for all assets at once
+    #     result[i, :] = np.nanmean(window, axis=0)  # mean across time, skip NaNs
+    # result = pd.DataFrame(result, index=data.index, columns=data.columns)
+    # return result
 
 
 def tsrank(data, t):
