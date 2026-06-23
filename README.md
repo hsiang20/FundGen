@@ -5,6 +5,7 @@ FundGen helps people without financial background to do generate profitable port
 * do backtesting and find best strategy
 * do research automatically because you don't have financial background
 * be cool
+
 FundGen is for you!
 
 ---
@@ -26,13 +27,16 @@ chmod +x run
 > If the stock price is higher than its 10-day average, we short the stock because we believe the price will fall. 
 
 Implement this strategy by writing in `hello.fund`:
-```c
+```python
 # Load price data
 load(data=Close);
+
 # Calculate the rolling average in 10 days periods
 tsmean(out=price_avg, in=Close, days=10);
+
 # Calculate the difference between the rolling average and the price
 sub(out=diff, in1=price_avg, in2=Close);
+
 # This is your portfolio. Return the portfolio and visualize profits
 normalize(out=portfolio, in=diff);
 stat portfolio;
@@ -253,13 +257,13 @@ Data are fetched from yfinance dataset.
 
 ## Primitives
 * Data Pre-processing
-```c
+```python
 nanto0(out, in); # if data = nan, make it 0
 cap_floor(out, in, cap, floor); # limit the range of in to [floor, cap]
 ```
 
 * Scalar Computation
-```c
+```python
 add(out, in1, in2); # out = in1 + in2
 sub(out, in1, in2); # out = in1 - in2
 mul(out, in1, in2); # out = in1 * in2
@@ -274,14 +278,14 @@ power(out, in, c); # out = in ** c, c is an integer
 ```
 
 * Asset-wise Operations
-```c
+```python
 rank(out, in); # rank asset-wise in each day. Data value will be 1, 2, ..., NUM_OF_ASSET
 demean(out, in); # move the data so that mean of each day = 0
 normalize(out, in) # move and scale the data so that mean = 0, std = 1 for each day
 ```
 
 * Time-series Operations
-```c
+```python
 tsmean(out, in, days); # out = moving average of "in" for the past "days" days. days is an integer > 0. 
 tsrank(out, in, days); # rank each asset among the past "days" days. Data value will be 1, 2, ..., days. days is an integer > 0.
 tscorr(out, in1, in2, days); # correlation coefficient of in1 and in2 over the past "days" days. days is an integer > 0. 
@@ -289,7 +293,7 @@ tsstd(out, in, days); # standard deviation of "in" over the past "days" days. da
 ```
 
 * Select Operation
-```c
+```python
 select(n) {
     primitive_1(),
     primitive_2(), 
