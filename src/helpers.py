@@ -7,9 +7,29 @@ from itertools import permutations
 import copy
 from config import *
 
-price_index = yf.download("AAPL", auto_adjust=True, start=start_date, end=end_date, progress=False).index
 price_data = ["High", "Low", "Close", "Volume", "Dividends", "Stock Splits"]
-financials_data = yf.Ticker("AAPL").financials.index
+
+_price_index = None
+_financials_data = None
+_price_download = None
+
+def get_price_index():
+    global _price_index
+    if _price_index is None:
+        _price_index = yf.download("AAPL", auto_adjust=True, start=start_date, end=end_date, progress=False).index
+    return _price_index
+
+def get_financials_data():
+    global _financials_data
+    if _financials_data is None:
+        _financials_data = yf.Ticker("AAPL").financials.index
+    return _financials_data
+
+def get_price_download():
+    global _price_download
+    if _price_download is None:
+        _price_download = yf.download(tickers, start=start_date, end=end_date, actions=True, progress=False)
+    return _price_download
 
 def args_check(args, needed_args):
     for needed_arg in needed_args:
@@ -29,21 +49,21 @@ High, Low, Close, Volume, Dividends, Stock Splits
 """
 def load(data_name):
     cache_name = f"{cache_path}/{data_name}.npz"
-    cached_data, cached_dates = load_from_cache(cache_name)
-    if is_cache_valid(cached_dates, price_index):
+    cached_data, cached_dates, cached_columns = load_from_cache(cache_name)
+    if is_cache_valid(cached_dates, get_price_index()):
         # print(data_name, "cache valid!")
-        return_data = pd.DataFrame(cached_data, index=cached_dates)
+        return_data = rebuild_cached_df(cached_data, cached_dates, cached_columns)
         # print(return_data)
         return return_data
     if data_name in price_data:
-        data = yf.download(tickers, start=start_date, end=end_date, actions=True, progress=False)
+        data = get_price_download()
         return_data = data[data_name]
-    elif data_name in financials_data:
-        return_data = pd.DataFrame(index=price_index)
+    elif data_name in get_financials_data():
+        return_data = pd.DataFrame(index=get_price_index())
         for ticker in tickers:
             try:
                 data = yf.Ticker(ticker).financials.loc[data_name]
-                daily_series = pd.Series(index=price_index, dtype=float)
+                daily_series = pd.Series(index=get_price_index(), dtype=float)
                 for fin_date, value in data.sort_index().items():
                     mask = daily_series.index >= fin_date
                     if mask.any():
@@ -54,19 +74,33 @@ def load(data_name):
             return_data[ticker] = daily_series
     else:
         raise ValueError(f"Unknown data field: {data_name}")
-    save_to_cache(return_data, price_index, cache_name)
+    save_to_cache(return_data, get_price_index(), cache_name)
     return return_data
 
 def save_to_cache(data, dates, filename):
-    np.savez(filename, data = data, dates = np.array(dates, dtype="str"))
+    # Persist column labels too so cache-hit reloads keep ticker alignment.
+    columns = np.array(getattr(data, "columns", []), dtype="str")
+    np.savez(filename, data = data, dates = np.array(dates, dtype="str"), columns = columns)
 
 def load_from_cache(filename):
     try:
         data = np.load(filename, allow_pickle=True)
         dates = pd.to_datetime(data["dates"])
-        return data["data"], dates
+        columns = data["columns"] if "columns" in data.files else None
+        return data["data"], dates, columns
     except (FileNotFoundError, KeyError):
-        return None, None
+        return None, None, None
+
+def rebuild_cached_df(cached_data, cached_dates, cached_columns):
+    # Reconstruct a cached DataFrame, restoring column labels from the cache
+    # when available, otherwise falling back to the configured tickers if the
+    # column count matches. Leaves a default RangeIndex if neither applies.
+    df = pd.DataFrame(cached_data, index=cached_dates)
+    if cached_columns is not None and len(cached_columns) == df.shape[1]:
+        df.columns = cached_columns
+    elif df.shape[1] == len(tickers):
+        df.columns = tickers
+    return df
 
 def is_cache_valid(old_dates, new_dates):
     # print("old_dates:", old_dates)
@@ -74,11 +108,11 @@ def is_cache_valid(old_dates, new_dates):
     return (old_dates is not None) and (len(old_dates) == len(new_dates)) and (all(old_dates == new_dates))
 
 def get_returns(new_dates):
-    cached_returns, cached_dates = load_from_cache(f"{cache_path}/returns.npz")
+    cached_returns, cached_dates, cached_columns = load_from_cache(f"{cache_path}/returns.npz")
     if is_cache_valid(cached_dates, new_dates):
         # print("returns cache valid!")
         # print(cached_returns["data"])
-        return cached_returns
+        return rebuild_cached_df(cached_returns, cached_dates, cached_columns)
     else:
         # print("cache invalid, reload returns data")
         close_data = load("Close")

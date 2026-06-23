@@ -29,11 +29,15 @@ def main():
             pass
     # print("==========Portfolio Today==========")
     # print(block)
-    cached_data, cached_dates = load_from_cache(f"{cache_path}/portfolio.npz")
+    cached_data, cached_dates, _cached_columns = load_from_cache(f"{cache_path}/portfolio.npz")
     portfolio = pd.DataFrame(cached_data, index=cached_dates).iloc[-1]
     portfolio = portfolio.replace(np.nan, 0)
     portfolio.index = tickers
-    portfolio = portfolio / sum(abs(portfolio)) * fund_size
+    gross = sum(abs(portfolio))
+    if gross == 0:
+        portfolio = portfolio * 0.0
+    else:
+        portfolio = portfolio / gross * fund_size
     # print(round(portfolio, 2))
     portfolio = round(portfolio, 2)
     portfolio.to_csv(f"{portfolio_path}/portfolio.csv")

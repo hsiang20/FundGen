@@ -160,7 +160,11 @@ class Select(Statement):
     exprs: list[FunctionCall]
 
     def __eq__(self, other):
-        return type(self) is type(other) and self.expr == other.expr
+        return (
+            type(self) is type(other)
+            and self.num == other.num
+            and self.exprs == other.exprs
+        )
 
 now_config = 0
 best_config = 0
@@ -341,7 +345,7 @@ def interpret_expr(expr: Expr, bindings, declarations):
                 for i in range(len(args)):
                     let_stmt = Let(params[i], arg_values[i])
                     interpret_stmt(let_stmt, bindings, declarations)
-                return_value = interpret_block(body, bindings, declarations)
+                return_value = interpret_block(body, bindings, declarations, top_level=False)
                 bindings.pop_scope()
                 return return_value
             else:
@@ -372,10 +376,17 @@ def interpret_stmt(stmt: Statement, bindings, declarations):
             interpret_expr(stmt, bindings, declarations)
             
 
-def interpret_block(block: Block, bindings, declarations):
+def interpret_block(block: Block, bindings, declarations, top_level=True):
     global now_config
     global best_config
     global best_stat
+    # Reset run-wide state only on the outermost call so repeated runs in the
+    # same process don't reuse stale best_stat/config. Recursive calls (e.g.
+    # user-function bodies) must NOT reset, or they'd wipe in-progress results.
+    if top_level:
+        now_config = 0
+        best_config = 0
+        best_stat = None
     num_of_iteration = 1
     all_block = [[]]
     for stmt in block.stmts:
@@ -397,6 +408,12 @@ def interpret_block(block: Block, bindings, declarations):
         now_config += 1
     print()
     print("============================")
+    if best_stat is None:
+        # No `stat` statement ran, so there's no best strategy to report/export.
+        print("No stat statement found; skipping best-strategy summary.")
+        print("============================")
+        print()
+        return []
     print("Best Strategy in this round:")
     print_config(all_block[best_config])
     print()
@@ -405,8 +422,8 @@ def interpret_block(block: Block, bindings, declarations):
     print("============================")
     print()
     # Draw and save image
-    cached_data, cached_dates = load_from_cache(f"{cache_path}/portfolio.npz")
-    portfolio = pd.DataFrame(cached_data, index=cached_dates)
+    cached_data, cached_dates, cached_columns = load_from_cache(f"{cache_path}/portfolio.npz")
+    portfolio = rebuild_cached_df(cached_data, cached_dates, cached_columns)
     save_profit(portfolio)
     with open(f"{strategy_path}/strategy.txt", "w") as f:
         for s in all_block[best_config]:

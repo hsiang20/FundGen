@@ -66,6 +66,9 @@ ASSET-WISE OPERATIONS
 def rank(data):
     ranks = data.rank(axis=1, method="average")
     N = data.shape[1]
+    # With a single asset there is no cross-sectional ranking; return neutral 0.0.
+    if N <= 1:
+        return ranks * 0.0
     return (ranks - 1) / (N - 1)
 
 def demean(data):
@@ -102,46 +105,24 @@ def tsmean(data, days):
 
 
 def tsrank(data, t):
-    arr = data.to_numpy()
-    T, N = arr.shape
-    result = np.full((T, N), np.nan, dtype=np.float64)
-
-    for i in range(T):
-        start = max(0, i - t + 1)
-        window = arr[start:i+1]  # shape: (window_len, N)
-        # Rank each column in the window, take rank of the last row
-        ranks = np.apply_along_axis(
-            lambda x: pd.Series(x).rank(method="average").iloc[-1], 
-            axis=0, arr=window
-        )
-        # Normalize by the actual window length so warm-up rows (window
-        # shorter than t) are scaled consistently into (0, 1].
-        window_len = i - start + 1
-        result[i] = ranks / window_len
-    return pd.DataFrame(result, index=data.index, columns=data.columns)
+    ranks = data.rolling(window=t, min_periods=1).apply(
+        lambda x: pd.Series(x).rank(method="average").iloc[-1], raw=False
+    )
+    # Normalize by the actual window length so warm-up rows (window shorter
+    # than t) are scaled consistently into (0, 1]: window_len = min(i + 1, t).
+    T = data.shape[0]
+    window_lens = pd.Series(
+        np.minimum(np.arange(1, T + 1), t), index=data.index, dtype=np.float64
+    )
+    return ranks.div(window_lens, axis=0)
 
 def tscorr(data1, data2, t):
-    T, N = data1.shape
-    result = np.full((T, N), np.nan)
-
-    d1 = data1.to_numpy()
-    d2 = data2.to_numpy()
-
-    for i in range(T):
-        start = max(0, i - t + 1)
-        window1 = d1[start:i+1]
-        window2 = d2[start:i+1]
-
-        # Compute correlation per column
-        for j in range(N):
-            x = window1[:, j]
-            y = window2[:, j]
-            if np.std(x) > 0 and np.std(y) > 0:
-                result[i, j] = np.corrcoef(x, y)[0, 1]
-            else:
-                result[i, j] = 0
-
-    return pd.DataFrame(result, index=data1.index, columns=data1.columns)
+    # min_periods=1 reproduces the original loop's warm-up behavior (values for
+    # partial windows). Windows with zero variance (or a NaN) yield NaN, which
+    # the original substituted with 0.
+    result = data1.rolling(window=t, min_periods=1).corr(data2)
+    result = result.replace([np.inf, -np.inf], np.nan).fillna(0.0)
+    return result.reindex(index=data1.index, columns=data1.columns)
 
 def tsstd(data, t):
     return data.rolling(window=t, min_periods=t).std()
