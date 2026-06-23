@@ -129,7 +129,15 @@ def save_profit(data):
     plt.savefig(f"{image_path}/profit.png")
     return cumulative_profit
 
+def l1_normalize(portfolio):
+    # Scale each day's positions so |weights| sum to 1, matching the
+    # exported (fund-size-scaled) portfolio. Days with no exposure stay 0.
+    gross = portfolio.abs().sum(axis=1)
+    gross = gross.replace(0, np.nan)
+    return portfolio.div(gross, axis=0).fillna(0.0)
+
 def show_stat(portfolio):
+    portfolio = l1_normalize(portfolio)
     daily_return = get_daily_profit(portfolio)
     # print("daily return")
     # print(daily_return)
@@ -142,18 +150,26 @@ def show_stat(portfolio):
     return sharpe_ratio, annual_return_rate, turnover_rate
 
 def get_annual_returns(daily_return):
-    cumulative_profit = np.cumsum(daily_return)
-    cumulative_profit = cumulative_profit * fund_size
-    total_return = cumulative_profit[-1] / fund_size
-    # annual_return = np.sum(daily_return) * (252 / len(daily_return))
-    total_return = np.nan_to_num(total_return, nan=1)
-    annual_return = abs(total_return)/total_return * abs(total_return) ** (252/len(daily_return)) * 100
+    daily_return = np.nan_to_num(daily_return, nan=0.0)
+    n = len(daily_return)
+    if n == 0:
+        return 0.0
+    # Cumulative additive return, consistent with the profit chart (cumsum).
+    total_return = np.sum(daily_return)
+    final_wealth = 1.0 + total_return
+    if final_wealth <= 0:
+        # Portfolio fully wiped out (or worse); report -100%.
+        return -100.0
+    annual_return = (final_wealth ** (252.0 / n) - 1.0) * 100
     return annual_return
 
 def get_Sharpe(daily_return):
+    daily_return = np.nan_to_num(daily_return, nan=0.0)
     mean_daily_return = np.mean(daily_return)
     std_daily_return = np.std(daily_return)
-
+    if std_daily_return == 0:
+        # No variation (e.g. flat or empty strategy): undefined Sharpe -> 0.
+        return 0.0
     sharpe_ratio = (mean_daily_return) / std_daily_return * np.sqrt(252)
     return sharpe_ratio
 

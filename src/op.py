@@ -6,10 +6,12 @@ import time
 DATA PROCESSING
 """
 def nanto0(data):
+    data = data.copy()
     data[np.isnan(data)] = 0.0
     return data
 
 def cap_floor(data, cap, floor):
+    data = data.copy()
     data[data > cap] = cap
     data[data < floor] = floor
     return data
@@ -112,8 +114,10 @@ def tsrank(data, t):
             lambda x: pd.Series(x).rank(method="average").iloc[-1], 
             axis=0, arr=window
         )
-        result[i] = ranks
-    result = result / t
+        # Normalize by the actual window length so warm-up rows (window
+        # shorter than t) are scaled consistently into (0, 1].
+        window_len = i - start + 1
+        result[i] = ranks / window_len
     return pd.DataFrame(result, index=data.index, columns=data.columns)
 
 def tscorr(data1, data2, t):

@@ -127,7 +127,7 @@ The variable `margin_rank` is the Profit Margin we measure.
 #### Price / Volume Relation
 The data we used above are fundamental. They update very slowly (at most 4 times a year). We want to mix the fundamental data signal with some faster signals so the portfolio reacts to short-term market fluctuation as well. Here we want to combine stock price and trading volume to create a signal. 
 
-However, we don't know how to use price and volume. Fortunately, Fundgen provides a primitive `select` to simulate all combinations of given functions and return the best combination. `select(0)` will try all combinations and permutations of the given functions. `select(n)` with n != 0 will try all combinations and permutations of n of the given functions. 
+However, we don't know how to use price and volume. Fortunately, Fundgen provides a primitive `select` to simulate all combinations of given functions and return the best combination. `select(0)` will try all and permutations of the given functions. `select(n)` with n != 0 will try all combinations and permutations of n of the given functions. 
 
 For example, if we think that the correlation coefficient between price and volume could be meaningful, and the movement of the correlation coefficient could also be meaningful, we can write: 
 ```python
