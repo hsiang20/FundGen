@@ -44,8 +44,8 @@ def load(data_name):
             try:
                 data = yf.Ticker(ticker).financials.loc[data_name]
                 daily_series = pd.Series(index=price_index, dtype=float)
-                for fin_date, value in data.items():
-                    mask = daily_series.index <= fin_date
+                for fin_date, value in data.sort_index().items():
+                    mask = daily_series.index >= fin_date
                     if mask.any():
                         daily_series.loc[mask] = value
                 daily_series = daily_series.ffill()

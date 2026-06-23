@@ -82,7 +82,7 @@ Open a new file `buffett.fund` and start coding!
 
 #### Load Data
 The first step is always loading data. We load all the data mentioned above as well as price/volume data. 
-```c
+```python
 load(data=Volume);
 load(data=Close);
 load(data=EBIT);
@@ -96,7 +96,7 @@ load(data="Total Revenue");
 From ChatGPT's reply, we know that EBITDA, EBIT, and Reconciled Depreciation are important in this strategy. Therefore, we want to add these numbers together. 
 Directly adding these numbers is unfair because we don't know the units of them and their magnitude. A more general method is ranking them across assets, and then adding the ranked values. 
 For Depreciation, we guess some companies don't have this entry on their statements. To prevent the NaN values affect the result, we can use `nanto0` to replace NaN with 0. 
-```c
+```python
 rank(out=EBIT_rank, in=EBIT);
 rank(out=EBITDA_rank, in="Normalized EBITDA");
 nanto0(out=Depreciation, in="Reconciled Depreciation");
@@ -108,7 +108,7 @@ The variable `earnings` is the Company Performance we measure.
 
 #### Earnings Consistency
 ChatGPT told us to calculate the standard deviation of the Net Income. Therefore we use `tsstd` to calculate the time-series standard deviation of the past 300 days. 300 is a random number we are trying, and we can replace it with other numbers. Here we also use `nanto0` to avoid NaN in our calculation. 
-```c
+```python
 tsstd(out=earnings_std, in="Net Income", days=300);
 nanto0(out=earnings_std, in=earnings_std);
 rank(out=earnings_std_rank, in=earnings_std);
@@ -117,7 +117,7 @@ The variable `earnings_std_rank` is the Earnings Consistency we measure.
 
 #### Profit Margin
 According to ChatGPT's formula, we want to calculate `Net Income / Revenue`. We don't know the Revenue's range, but since it is a denominator, we don't want extreme values. Therefore we use `cap_floor` to limit the range of Revenue. 
-```c
+```python
 cap_floor(out=revenue_cap, in="Total Revenue", cap=100000, floor=100);
 div(out=margin, in1="Net Income", in2=revenue_cap);
 rank(out=margin_rank, in=margin);
@@ -130,7 +130,7 @@ The data we used above are fundamental. They update very slowly (at most 4 times
 However, we don't know how to use price and volume. Fortunately, Fundgen provides a primitive `select` to simulate all combinations of given functions and return the best combination. `select(0)` will try all combinations and permutations of the given functions. `select(n)` with n != 0 will try all combinations and permutations of n of the given functions. 
 
 For example, if we think that the correlation coefficient between price and volume could be meaningful, and the movement of the correlation coefficient could also be meaningful, we can write: 
-```c
+```python
 rank(out=volume_rank, in=Volume);
 rank(out=close_rank, in=Close);
 select(0) {
@@ -148,7 +148,7 @@ The variable `pv_corr_tsrank` is the Price / Volume Relation we measure (althoug
 
 #### Ensemble all the signals
 Finally, we add all the signals we generated above. We believe that Buffett's idea is better than ours (price/volume relation), so we multiply Buffett's signal by 5 before adding it to the unknown price/volume signal. 
-```c
+```python
 add(out=_, in1=earnings, in2=earnings_std_rank);
 rank(out=_, in=_);
 add(out=_, in1=_, in2=margin_rank);
@@ -159,13 +159,13 @@ add(out=_, in1=_, in2=pv_corr_tsrank);
 
 #### Normalize
 We want our portfolio to be independent of the overall market index. Moreover, we don't want extreme values to affect the portfolio. Using `normalize` here helps demean and reshape our portfolio. 
-```c
+```python
 normalize(out=portfolio, in=_);
 ```
 
 #### Return
 Finally, the variable `portfolio` is the portfolio we generate. We use `stat` to measure the performance. 
-```c
+```python
 stat portfolio;
 ```
 
@@ -179,10 +179,10 @@ or directly run our example:
 ./run examples/buffett.fund
 ```
 Since we use `select`, there are 60 cases to run. The program should output
-> Stats of the best strategy:  
-> Sharpe: 2.09  
-> Annual Returns Rate: 234.675%  
-> Turnover Rate: 9.83%  
+> Stats of the best strategy:
+> Sharpe: 0.998
+> Annual Returns Rate: 189.059%
+> Turnover Rate: 6.729%
 
 With the best strategy specifying what strategy yields this performance. 
 
@@ -190,7 +190,7 @@ In `image` directory we can find the cumulative profits over two years:
 ![image](image/buffett.png)
 
 This looks really good! 
-For your information, Buffett's Berkshire Hathaway has realized a Sharpe ratio of 0.79. And we got 2.09 with our strategy, which means in terms of Sharpe ratio we beat Buffett!
+For your information, Buffett's Berkshire Hathaway has realized a Sharpe ratio of 0.79. And we got 0.998 with our strategy, which means in terms of Sharpe ratio we beat Buffett!
 
 Although in the real investment, we also need to consider turnover rate (related to transaction fee and liquidity), drop down (related to risk management), and other metrics, this example shows that FundGen provides a great platform for people without financial knowledge to generate portfolio which can potentially earn (a lot of) money. 
 
